@@ -3,6 +3,9 @@ include console.inc
 .data
 	; messages
 	Hello db 'Write your string: ', 0
+  Readed db 'Readed:', 0
+  First db 'First condition applied:', 0
+  Second db 'Second condition applied:', 0
 
 	; var
 	N = 100
@@ -165,7 +168,10 @@ Start:
 	call Main_read
 	
 	; output
+  NEWLINE
+  OUTSTRLN offset Readed
 	OUTSTRLN offset S
+  NEWLINE
 
   ; check condition procedure
   push eax
@@ -173,14 +179,13 @@ Start:
   push ecx
 	call Main_check
 
-	OUTINTLN eax
-
 ; first condition
   cmp eax, -1
   jne Sec_condition
   mov eax, offset S
   push eax
   call Main_resize_letters
+  OUTSTRLN offset First
   OUTSTRLN offset S
   jmp Finish
 
@@ -191,6 +196,7 @@ Sec_condition:
   mov eax, offset S
   push eax
   call Main_duplicate_letters
+  OUTSTRLN offset Second
   OUTSTRLN offset X
 
 Finish:
