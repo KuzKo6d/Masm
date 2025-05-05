@@ -44,7 +44,7 @@ After_loop_read:
 Main_read endp
 
 
-; takes offset of last letter offset S
+; takes offset of last letter, offset S
 Main_check proc ; check last letter. if it's capital and nowhere else -> true (-1) in eax
 	push ebp
 	mov ebp, esp
@@ -87,8 +87,6 @@ Main_resize_letters proc ; invert size of a-z, A-Z letters
   push ebp
   mov ebp, esp
 
-  push ebx
-
   mov eax, [ebp + 8] ; offset S
   
   mov ecx, 0
@@ -123,10 +121,40 @@ Resize_not_upper:
   jmp L_resize
 
 Resize_finish:
-  pop ebx
   pop ebp
   ret 4
 Main_resize_letters endp
+
+
+; takes offset X, offset S
+Main_duplicate_letters proc ; duplicates letters from S and writes them to X
+  push ebp
+  mov ebp, esp
+
+  push ebx
+
+  mov eax, [ebp + 8] ; offset S
+  mov ebx, [ebp + 12] ; offset X
+
+  mov ecx, 0
+L_duplicate:
+  mov dl, [eax + ecx]
+  cmp dl, 0 ; handle end of string
+  je Duplicate_finish
+  ; fill the X
+  mov [ebx + 2 * ecx], dl
+  mov [ebx + 2 * ecx + 1], dl
+
+  inc ecx
+  jmp L_duplicate
+
+Duplicate_finish:
+  mov dl, 0
+  mov [ebx + 2 * ecx], dl ; mark end of X string
+  pop ebx
+  pop ebp
+  ret 8
+Main_duplicate_letters endp
 
 Start:
 	; input
@@ -153,17 +181,17 @@ Start:
   mov eax, offset S
   push eax
   call Main_resize_letters
-  jmp Output
+  OUTSTRLN offset S
+  jmp Finish
 
 ; second condition
 Sec_condition:
   mov eax, offset X
   push eax
-  ; call Main_duplicate_letters
-
-; final output
-Output:
-  OUTSTRLN offset S
+  mov eax, offset S
+  push eax
+  call Main_duplicate_letters
+  OUTSTRLN offset X
 
 Finish:
 	exit 0
