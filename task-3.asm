@@ -7,7 +7,7 @@ include console.inc
 	; var
 	N = 100
 	S db N dup (?), 0
-	dot dd 0
+  X db 2*N dup (?), 0
 
 .code
 ; takes N and offset S
@@ -82,6 +82,52 @@ Check_finish:
 Main_check endp
 
 
+; takes offset S
+Main_resize_letters proc ; invert size of a-z, A-Z letters
+  push ebp
+  mov ebp, esp
+
+  push ebx
+
+  mov eax, [ebp + 8] ; offset S
+  
+  mov ecx, 0
+L_resize:
+  mov dl, [eax + ecx] ; fetch current letter
+  cmp dl, 0 ; handle end of string
+  je Resize_finish
+
+  ; check lowercase
+  cmp dl, 'a'
+  jb Resize_not_lower
+  cmp dl, 'z'
+  ja Resize_not_lower
+  sub dl, 'a'-'A'
+  mov [eax + ecx], dl
+  inc ecx
+  jmp L_resize
+Resize_not_lower:
+
+  ; check uppercase
+  cmp dl, 'A'
+  jb Resize_not_upper
+  cmp dl, 'Z'
+  ja Resize_not_upper
+  add dl, 'a'-'A'
+  mov [eax + ecx], dl
+  inc ecx
+  jmp L_resize
+Resize_not_upper:
+
+  inc ecx
+  jmp L_resize
+
+Resize_finish:
+  pop ebx
+  pop ebp
+  ret 4
+Main_resize_letters endp
+
 Start:
 	; input
 	OUTSTR offset Hello
@@ -93,13 +139,31 @@ Start:
 	; output
 	OUTSTRLN offset S
 
-  ; check condition
+  ; check condition procedure
   push eax
   mov ecx, offset S
   push ecx
 	call Main_check
 
 	OUTINTLN eax
+
+; first condition
+  cmp eax, -1
+  jne Sec_condition
+  mov eax, offset S
+  push eax
+  call Main_resize_letters
+  jmp Output
+
+; second condition
+Sec_condition:
+  mov eax, offset X
+  push eax
+  ; call Main_duplicate_letters
+
+; final output
+Output:
+  OUTSTRLN offset S
 
 Finish:
 	exit 0
