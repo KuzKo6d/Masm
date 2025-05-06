@@ -90,6 +90,8 @@ Main_resize_letters proc ; invert size of a-z, A-Z letters
   push ebp
   mov ebp, esp
 
+  push ebx
+
   mov eax, [ebp + 8] ; offset S
   
   mov ecx, 0
@@ -98,24 +100,15 @@ L_resize:
   cmp dl, 0 ; handle end of string
   je Resize_finish
 
-  ; check lowercase
-  cmp dl, 'a'
-  jb Resize_not_lower
-  cmp dl, 'z'
-  ja Resize_not_lower
-  sub dl, 'a'-'A'
-  mov [eax + ecx], dl
-  inc ecx
-  jmp L_resize
-Resize_not_lower:
-
   ; check uppercase
   cmp dl, 'A'
   jb Resize_not_upper
   cmp dl, 'Z'
   ja Resize_not_upper
-  add dl, 'a'-'A'
-  mov [eax + ecx], dl
+
+  mov bl, 'A' + 'Z'
+  sub bl, dl
+  mov [eax + ecx], bl
   inc ecx
   jmp L_resize
 Resize_not_upper:
@@ -124,6 +117,7 @@ Resize_not_upper:
   jmp L_resize
 
 Resize_finish:
+  pop ebx
   pop ebp
   ret 4
 Main_resize_letters endp
