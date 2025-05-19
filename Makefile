@@ -9,7 +9,7 @@ LINKER = $(WINE) Z:\\bin\\link.exe
 LINKER_FLAGS = /subsystem:console /LIBPATH:"Z:\\lib"
 
 # Исходники и выходной файл
-SOURCES = task-3.asm
+SOURCES = task-4.asm
 PROGRAM = program.exe
 
 # Автоматическое формирование списков файлов
