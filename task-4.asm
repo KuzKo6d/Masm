@@ -4,65 +4,125 @@ include console.inc
 
 .data
 ; messages
-  E1 db 'Error: blank argument.', 0
-  E2 db 'Error: incorrect operation.', 0
-  E3 db 'Eroor: incorrect argument (dword).', 0
-  E4 db 'Error: incorrect argument (constant).', 0
-  E5 db 'Error: param1 oveflow.', 0
-E1 db '', 0
-E1 db '', 0
+  miumiu db 'miumiu', 0
+  E_empty db 'CALC_THREE: empty param.', 0
+  E_overflow db 'CALC_THREE: param1 oveflow.', 0
+  E_invalid_operation db 'CALC_THREE: invalid operation.', 0
+  E_size db 'CALC_THREE: invalid size of param.', 0
+  inp1 db 'param1: ', 0
+  inp2 db 'param2: ', 0
+  inp3 db 'param3: ', 0
+  out1 db 'output: ', 0
+; mem
+  b1 db 1
+  b2 db 2
+  b3 db 3
+  w1 dw 1
+  w2 dw 2
+  w3 dw 3
+  d1 dd 1
+  C = 5
+
 
 .code
-CALC_THREE macro operation, param1, param2, param3
-; MADD: param1:= param1 + param2 + param3
-; MMUL: param1:= param1 + param2 * param3
+  CALC_THREE MACRO p0, p1, p2, p3
+  LOCAL Overflow, Success
 
-; blank check
-IFB operation
-  .ERR <Blank operation.>
-ELSEIFB param1
-  .ERR <Blank param1.>
-ELSEIFB param2
-  .ERR <Blank param2.>
-ELSEIFB param3
-  .ERR <Blank param3.>
+  ; CHECKS
+  ; blank check
+  IFB <P0>
+    OUTSTRLN offset E_empty
+    exitm
+  ELSEIFB <P1>
+    OUTSTRLN offset E_empty
+    exitm
+   ELSEIFB <P2>
+    OUTSTRLN offset E_empty
+    exitm
+   ELSEIFB <P3>
+    OUTSTRLN offset E_empty
+    exitm
+  ENDIF 
+  ; size check
+  FOR i, <p1, p2, p3>
+    IF (TYPE i EQ 4) OR (TYPE i EQ 0)
+      OUTSTRLN offset E_size
+      exitm
+    ENDIF
+  ENDM
 
-; constant check
-IF TYPE param1 EQ 0
-.ERR <Incorrect param1 size.>
-ELSEIF TYPE param2 EQ 0
-.ERR <Incorrect param2 size.>
-ELSEIF TYPE param3 EQ 0
-.ERR <Incorrect param3 size.>
+  ; PUSH
+  push eax
+  push ebx
+  push ecx
+  push edx
 
-; size check
-IF SIZEOF param1 GT 2
-  .ERR <Incorrect param1 size.>
-ELSEIF SIZEOF param2 GT 2
-  .ERR <Incorrect param2 size.>
-ELSEIF SIZEOF param3 GT 2
-  .ERR <Incorrect param3 size.>
+  ; MAIN
+  ; madd: p1 := p1 + p2 + p3
+  IFIDNI <p0>, <MADD>
+    ; mov dw (with extention if needed)
+    IF TYPE p1 EQ 2
+      mov ax, p1
+      IF TYPE p2 EQ 1
+        movzx bx, p2
+      ELSE
+        mov bx, p2
+      ENDIF
+      IF TYPE p3 EQ 1
+        movzx cx, p3
+      ELSE
+        mov cx, p3
+      ENDIF
+    ; mov db (with size check)
+    ELSE
+      mov al, p1
+      IF TYPE p2 EQ 2
+        OUTSTRLN offset E_size
+        exitm
+      ENDIF
+      IF TYPE p3 EQ 2
+        OUTSTRLN offset E_size
+        exitm
+      ENDIF
 
+      mov bl, p2
+      mov cl, p3
+    ENDIF
 
+  ; mmul: p1:= p1 + p2 * p3
+  ELSEIFIDNI <p0>, <MMUL>
+    OUTSTRLN offset miumiu
 
-; operation level
-IFIDNI operation, 'MADD'
+  ; invalid operation
+  ELSE
+    OUTSTRLN offset E_invalid_operation
+    exitm
+  ENDIF
 
-
-; operation level
-ELSEIFIDNI operation, 'MMUL'
-
-
-; operation level
-ELSE
-  .ERR <Incorrect operation.>
-ENDIF
-
-
-endm
+  ; POP
+  pop edx
+  pop ecx
+  pop ebx
+  pop eax
+ENDM
 
 
 Start:
+  OUTSTR offset inp1
+  ININT ax
+  NEWLINE
+  OUTSTR offset inp2
+  ININT bx
+  NEWLINE
+  OUTSTR offset inp3
+  ININT cx
+  NEWLINE
 
+  CALC_THREE MADD, ax, bx, cx
 
-  end Start
+  OUTSTR offset out1
+  OUTINT ax
+  NEWLINE
+
+  exit 0
+end Start

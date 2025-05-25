@@ -1,0 +1,118 @@
+include console.inc
+
+; MADD, MMUL, unsigned, m8/r8, m16/m16
+
+.data
+; messages
+  E_overflow db 'CALC_THREE: param1 oveflow.', 0
+  inp1 db 'param1: ', 0
+  inp2 db 'param2: ', 0
+  inp3 db 'param3: ', 0
+  out1 db 'output: ', 0
+
+.code
+CALC_THREE MACRO operation, param1, param2, param3
+  LOCAL Overflow, Success
+; MADD: param1:= param1 + param2 + param3
+; MMUL: param1:= param1 + param2 * param3
+
+; PUSH
+  push eax
+  push ecx
+  push edx
+
+; CHECKS
+; blank check
+IFB operation
+  .ERR <Blank operation.>
+ELSEIFB param1
+  .ERR <Blank param1.>
+ELSEIFB param2
+  .ERR <Blank param2.>
+ELSEIFB param3
+  .ERR <Blank param3.>
+ENDIF
+
+; constant check
+IF TYPE param1 EQ 0
+.ERR <Incorrect param1. Can't operate with constant.>
+ELSEIF TYPE param2 EQ 0
+.ERR <Incorrect param2. Can't operate with constant.>
+ELSEIF TYPE param3 EQ 0
+.ERR <Incorrect param3. Can't operate with constant.>
+ENDIF
+
+; size check
+IF SIZEOF param1 GT 2
+  .ERR <Param1 size is too big.>
+ELSEIF SIZEOF param2 GT 2
+  .ERR <Param2 size is too big.>
+ELSEIF SIZEOF param3 GT 2
+  .ERR <Param3 size is too big.>
+ENDIF
+
+; BODY
+; operation defining MADD
+IFIDNI operation, 'MADD'
+  add param1, param2
+  jo Overflow
+  add param1, param3
+  jo Overflow
+  jmp Success
+
+; operation defining MMUL
+ELSEIFIDNI operation, 'MMUL'
+  ; multiplication arguments size check
+  IF (SIZEOF param2 EQ 1) AND (SIZEOF param3 EQ 1)
+    mov al, param2
+    mov cl, param3
+    mul cl
+    jo Overflow
+
+    ; check size of param1
+    IF SIZEOF param1 EQ 1
+      add param1, cl
+    ELSE
+      mov ah, 0 ; extend to word
+      add param1, ax
+    ENDIF
+    jo Overflow
+    jmp Success
+
+  ELSE
+    .ERR <Param2 or param3 is too big. Can multiply only byte size.>
+  ENDIF
+
+; operation defining Error
+ELSE
+  .ERR <Incorrect operation.>
+ENDIF
+
+Overflow:
+  OUTSTRLN offset E_overflow
+
+Success:
+  pop edx
+  pop ecx
+  pop eax
+ENDM
+
+
+Start:
+  OUTSTR offset inp1
+  ININT ax
+  NEWLINE
+  OUTSTR offset inp2
+  ININT bx
+  NEWLINE
+  OUTSTR offset inp3
+  ININT cx
+  NEWLINE
+
+  CALC_THREE <'MADD'>, ax, bx, cx
+
+  OUTSTR offset out1
+  OUTINTLN
+
+  end Start
+  exit 0
