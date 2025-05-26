@@ -26,7 +26,7 @@ include console.inc
 
 .code
   CALC_THREE MACRO p0, p1, p2, p3
-  LOCAL Overflow, Success
+  LOCAL Overflow, Finish
 
   ; CHECKS
   ; blank check
@@ -73,20 +73,31 @@ include console.inc
       ELSE
         mov cx, p3
       ENDIF
+      ; sum
+      add ax, bx
+      jc Overflow
+      add ax, cx
+      jc Overflow
+      ; save
+      mov [esp + 12], ax
+      jmp Finish
     ; mov db (with size check)
     ELSE
       mov al, p1
-      IF TYPE p2 EQ 2
+      IF (TYPE p2 EQ 2) OR (TYPE p3 EQ 2)
         OUTSTRLN offset E_size
-        exitm
+        jmp Finish
       ENDIF
-      IF TYPE p3 EQ 2
-        OUTSTRLN offset E_size
-        exitm
-      ENDIF
-
       mov bl, p2
       mov cl, p3
+      ; sum
+      add al, bl
+      jc Overflow
+      add al, cl
+      jc Overflow
+      ; save
+      mov [esp + 12], al
+      jmp Finish
     ENDIF
 
   ; mmul: p1:= p1 + p2 * p3
@@ -96,9 +107,13 @@ include console.inc
   ; invalid operation
   ELSE
     OUTSTRLN offset E_invalid_operation
-    exitm
+    jmp Finish
   ENDIF
 
+Overflow:
+  OUTSTRLN offset E_overflow
+
+Finish:
   ; POP
   pop edx
   pop ecx
@@ -109,20 +124,16 @@ ENDM
 
 Start:
   OUTSTR offset inp1
-  ININT ax
-  NEWLINE
+  ININTLN ax
   OUTSTR offset inp2
-  ININT bx
-  NEWLINE
+  ININTLN bl
   OUTSTR offset inp3
-  ININT cx
-  NEWLINE
+  ININTLN cl
 
-  CALC_THREE MADD, ax, bx, cx
+  CALC_THREE MADD, ax, bl, cl
 
   OUTSTR offset out1
-  OUTINT ax
-  NEWLINE
+  OUTINTLN ax
 
   exit 0
 end Start

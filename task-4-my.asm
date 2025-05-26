@@ -4,112 +4,136 @@ include console.inc
 
 .data
 ; messages
+  miumiu db 'miumiu', 0
+  E_empty db 'CALC_THREE: empty param.', 0
   E_overflow db 'CALC_THREE: param1 oveflow.', 0
+  E_invalid_operation db 'CALC_THREE: invalid operation.', 0
+  E_size db 'CALC_THREE: invalid size of param.', 0
   inp1 db 'param1: ', 0
   inp2 db 'param2: ', 0
   inp3 db 'param3: ', 0
   out1 db 'output: ', 0
+; mem
+  b1 db 1
+  b2 db 2
+  b3 db 3
+  w1 dw 1
+  w2 dw 2
+  w3 dw 3
+  d1 dd 1
+  C = 5
+
 
 .code
-  CALC_THREE MACRO operation:REQ, p1, p2, p3
-  LOCAL Overflow, Success
-; MADD: param1:= param1 + param2 + param3
-; MMUL: param1:= param1 + param2 * param3
+  CALC_THREE MACRO p0, p1, p2, p3
+  LOCAL Overflow, Finish
 
-; PUSH
+  ; CHECKS
+  ; blank check
+  IFB <P0>
+    OUTSTRLN offset E_empty
+    exitm
+  ELSEIFB <P1>
+    OUTSTRLN offset E_empty
+    exitm
+   ELSEIFB <P2>
+    OUTSTRLN offset E_empty
+    exitm
+   ELSEIFB <P3>
+    OUTSTRLN offset E_empty
+    exitm
+  ENDIF 
+  ; size check
+  FOR i, <p1, p2, p3>
+    IF (TYPE i EQ 4) OR (TYPE i EQ 0)
+      OUTSTRLN offset E_size
+      exitm
+    ENDIF
+  ENDM
+
+  ; PUSH
   push eax
+  push ebx
   push ecx
   push edx
 
-; CHECKS
-; blank check
-FOR i, <operation, p1, p2, p3>
-  IFB i
-    .ERR <Blank param.>
-  ENDIF
-ENDM
-
-; size check (dd/constant not supported)
-FOR i, <p1, p2, p3>
-  IF (TYPE i EQ 4) OR (TYPE i EQ 0)
-    .ERR <Param is too big.>
-  ENDIF
-ENDM
-
-; BODY
-; operation defining MADD
-IFIDNI <operation>, <MADD>
-  mov ax, p1
-  add ax, p2
-  jo Overflow
-  add ax, p3
-  jo Overflow
-  mov p1, ax
-  jmp Success
-
-; operation defining MMUL
-ELSEIFIDNI <operation>, <MMUL>
-  ; multiplication arguments size check
-  IF (SIZEOF p2 EQ 1) AND (SIZEOF p3 EQ 1)
-    mov al, p2
-    mov cl, p3
-    mul cl
-    jo Overflow
-
-    ; check size of param1
-    IF SIZEOF p1 EQ 1
-      mov dl, p1
-      add dl, al
-      jo Overflow
-      mov p1, dl
+  ; MAIN
+  ; madd: p1 := p1 + p2 + p3
+  IFIDNI <p0>, <MADD>
+    ; mov dw (with extention if needed)
+    IF TYPE p1 EQ 2
+      mov ax, p1
+      IF TYPE p2 EQ 1
+        movzx bx, p2
+      ELSE
+        mov bx, p2
+      ENDIF
+      IF TYPE p3 EQ 1
+        movzx cx, p3
+      ELSE
+        mov cx, p3
+      ENDIF
+      ; sum
+      add ax, bx
+      jc Overflow
+      add ax, cx
+      jc Overflow
+      ; save
+      mov p1, ax
+      jmp Finish
+    ; mov db (with size check)
     ELSE
-      mov dx, p1
-      mov ah, 0 ; extend to word
-      add dx, ax
-      jo Overflow
-      mov p1, dx
+      mov al, p1
+      IF (TYPE p2 EQ 2) OR (TYPE p3 EQ 2)
+        OUTSTRLN offset E_size
+        exitm
+      ENDIF
+      mov bl, p2
+      mov cl, p3
+      ; sum
+      add al, bl
+      jc Overflow
+      add al, cl
+      jc Overflow
+      ; save
+      mov p1, al
+      jmp Finish
     ENDIF
-    jmp Success
 
+  ; mmul: p1:= p1 + p2 * p3
+  ELSEIFIDNI <p0>, <MMUL>
+    OUTSTRLN offset miumiu
+
+  ; invalid operation
   ELSE
-    .ERR <Param2 or param3 is too big. Can multiply only byte size.>
+    OUTSTRLN offset E_invalid_operation
+    jmp Finish
   ENDIF
-
-; operation defining Error
-ELSE
-  .ERR <Incorrect operation.>
-ENDIF
 
 Overflow:
-  pop edx
-  pop ecx
-  pop eax
   OUTSTRLN offset E_overflow
-  EXITM
 
-Success:
+Finish:
+  ; POP
   pop edx
   pop ecx
+  pop ebx
   pop eax
 ENDM
 
 
 Start:
   OUTSTR offset inp1
-  ININT ax
-  NEWLINE
+  ININTLN al
   OUTSTR offset inp2
-  ININT bx
-  NEWLINE
+  ININTLN bl
   OUTSTR offset inp3
-  ININT cx
-  NEWLINE
+  ININTLN cl
 
-  CALC_THREE MADD, ax, bx, cx
+  CALC_THREE MADD, al, bl, cl
 
   OUTSTR offset out1
   OUTINTLN ax
 
   exit 0
-  end Start
-
+end Start
