@@ -109,7 +109,7 @@ include console.inc
         mov [esp + 4], al
       ELSEIFIDNI <p1>, <cx>
         mov [esp], al
-      ELSE
+      ELSEoperation
         mov p1, al
       ENDIF
       jmp Finish
@@ -162,16 +162,17 @@ ENDM
 
 Start:
   OUTSTR offset inp1
-  ININTLN ax
+  ININTLN dx
   OUTSTR offset inp2
   ININTLN bl
   OUTSTR offset inp3
   ININTLN cl
 
-  CALC_THREE MADD, ax, bl, cl
+  CALC_THREE MADD, dx, bl, cl
+;  CALC_THREE MADD, w1, b2, b3
 
   OUTSTR offset out1
-  OUTINTLN ax
+  OUTINTLN dx
 
   exit 0
 end Start
