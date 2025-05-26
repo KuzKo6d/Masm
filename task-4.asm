@@ -55,7 +55,6 @@ include console.inc
   push eax
   push ebx
   push ecx
-  push edx
 
   ; MAIN
   ; madd: p1 := p1 + p2 + p3
@@ -79,7 +78,15 @@ include console.inc
       add ax, cx
       jc Overflow
       ; save
-      mov [esp + 12], ax
+      IFIDNI <p1>, <ax>
+        mov [esp + 8], ax
+      ELSEIFIDNI <p1>, <bx>
+        mov [esp + 4], ax
+      ELSEIFIDNI <p1>, <cx>
+        mov [esp], ax
+      ELSE
+        mov p1, ax
+      ENDIF
       jmp Finish
     ; mov db (with size check)
     ELSE
@@ -96,13 +103,45 @@ include console.inc
       add al, cl
       jc Overflow
       ; save
-      mov [esp + 12], al
+      IFIDNI <p1>, <ax>
+        mov [esp + 8], ax
+      ELSEIFIDNI <p1>, <bx>
+        mov [esp + 4], ax
+      ELSEIFIDNI <p1>, <cx>
+        mov [esp], ax
+      ELSE
+        mov p1, ax
+      ENDIF
       jmp Finish
     ENDIF
 
   ; mmul: p1:= p1 + p2 * p3
   ELSEIFIDNI <p0>, <MMUL>
-    OUTSTRLN offset miumiu
+    ; size check
+    IF (TYPE p1 EQ 1) OR (TYPE p2 EQ 2) OR (TYPE p3 EQ 2)
+      OUTSTRLN offset E_size
+      jmp Finish
+    ENDIF
+    ; mov
+    mov cx, p1
+    mov al, p2
+    mov bl, p3
+    ; mult and sum
+    mul bl
+    jc Overflow
+    add ax, cx
+    jc Overflow
+    ; save
+    IFIDNI <p1>, <ax>
+      mov [esp + 8], ax
+    ELSEIFIDNI <p1>, <bx>
+      mov [esp + 4], ax
+    ELSEIFIDNI <p1>, <cx>
+      mov [esp], ax
+    ELSE
+      mov p1, ax
+    ENDIF
+    jmp Finish
 
   ; invalid operation
   ELSE
@@ -115,7 +154,6 @@ Overflow:
 
 Finish:
   ; POP
-  pop edx
   pop ecx
   pop ebx
   pop eax
