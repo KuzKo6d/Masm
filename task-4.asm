@@ -104,13 +104,13 @@ include console.inc
       jc Overflow
       ; save
       IFIDNI <p1>, <ax>
-        mov [esp + 8], ax
+        mov [esp + 8], al
       ELSEIFIDNI <p1>, <bx>
-        mov [esp + 4], ax
+        mov [esp + 4], al
       ELSEIFIDNI <p1>, <cx>
-        mov [esp], ax
+        mov [esp], al
       ELSE
-        mov p1, ax
+        mov p1, al
       ENDIF
       jmp Finish
     ENDIF
